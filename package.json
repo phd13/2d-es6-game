@@ -1,0 +1,24 @@
+{
+    "name": "opa-game",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/opaoz/opa_game.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/opaoz/opa_game/issues"
+    },
+    "homepage": "https://github.com/opaoz/opa_game#readme",
+    "devDependencies": {
+        "babel-eslint": "^8.0.1",
+        "babel-preset-env": "^1.6.0",
+        "babel-preset-stage-3": "^6.24.1"
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "prefix": "img",
+    "actors": [
+        "Arina.png",
+        "Azazel.png",
+        "Darkside.png",
+        "DoomKnight.png",
+        "Knight.png",
+        "Naga.png",
+        "Necropoth.png",
+        "Pirat.png"
+    ],
+    "bonuses": [
+        "apple.png",
+        "banana.png",
+        "berry.png",
+        "cherry.png",
+        "lemon.png",
+        "melon.png",
+        "peach.png",
+        "pear.png",
+        "pineapple.png"
+    ],
+    "keys": [
+        "down.png",
+        "left.png",
+        "right.png",
+        "up.png",
+        "space.png"
+    ],
+    "monsters": [
+        "bull.png",
+        "opossum.png",
+        "rat.png"
+    ],
+    "stats": [
+        "damage.png",
+        "health.png",
+        "speed.png"
+    ],
+    "swords": [
+        "down.png",
+        "left.png",
+        "right.png",
+        "up.png"
+    ],
+    "terrain": [
+        "bushes0.png",
+        "bushes1.png",
+        "earth.png",
+        "pit.png",
+        "stone0.png",
+        "stone1.png"
+    ]
+}
