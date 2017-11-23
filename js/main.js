@@ -1,23 +1,104 @@
-class Main {
-    constructor() {
+/**
+ * Storage for game textures
+ * @type {{_: string, *: string, #: string, $: string, ^: string}}
+ */
+const textures = {
+    '_': 'img/terrain/earth.png',
+    '*': 'img/terrain/bushes1.png',
+    '#': 'img/terrain/bushes0.png',
+    '$': 'img/actors/DoomKnight.png',
+    '^': 'img/bonuses/apple.png'
+};
+/**
+ * Game field matrix, size and textures
+ * @type {[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}
+ */
+const matrix =
+    [
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+        ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_']
+    ];
 
+class GameController {
+    constructor() {
+        this.eventsController = new EventsController(this.setDirection.bind(this));
+        this.player = new Player({sWidth: 32, sHeight: 32, sX: 0, sY: 0, width: 32, height: 32, x: 150, y: 150, key: '$'});
+        this.canvas = new Canvas(matrix, textures, {width: 32, height: 32}, this.prepareObjectsData.bind(this));
+        this.bonus = new Bonus({sWidth: 22, sHeight: 22, sX: 0, sY: 0, width: 22, height: 22, x: 200, y: 200, key: '^'});
+        console.log(this.player);
+    }
+
+    /**
+     * Sets and controls direction and coordinates for moving
+     * @param direction
+     */
+    setDirection(direction) {
+        this.player.move(direction);
+    }
+
+    prepareObjectsData() {
+        let objData = [];
+        const playerData = {
+            sX: this.player.sX,
+            sY: this.player.sY,
+            sWidth: this.player.sWidth,
+            sHeight: this.player.sHeight,
+            x: this.player.x,
+            y: this.player.y,
+            width: this.player.width,
+            height: this.player.height,
+            key: this.player.key,
+            speed: this.player.speed
+        };
+        const bonusData = {
+            sX: this.bonus.sX,
+            sY: this.bonus.sY,
+            sWidth: this.bonus.sWidth,
+            sHeight: this.bonus.sHeight,
+            x: this.bonus.x,
+            y: this.bonus.y,
+            width: this.bonus.width,
+            height: this.bonus.height,
+            key: this.bonus.key
+        };
+
+        objData.push(playerData, bonusData);
+        return objData;
     }
 }
 
+/**
+ * Class for canvas creation and rendering
+ */
 class Canvas {
-    constructor(matrix, texturesData, tileData) {
+    constructor(matrix, texturesData, tileData, getObjectsData) {
         this.canvas = document.getElementById('canvas');
         this.context = this.canvas.getContext('2d');
 
         this.fieldMatrix = matrix;
         this.texturesData = texturesData;
         this.tileData = tileData;
+        this.getObjectsData = getObjectsData;
+        this.field = {
+            width: 0,
+            height: 0
+        };
 
         this.textures = {};
-        this.preLoadData();
-        setTimeout(() => {
-            this.drawField()
-        }, 1000);
+        this.preLoadData(Canvas.createCanvas);
     }
 
     setCanvasSize(matrixWidth, matrixHeight) {
@@ -28,67 +109,158 @@ class Canvas {
     }
 
     drawField() {
-        let height = this.fieldMatrix.length,
-            width = this.fieldMatrix[0].length;
-        this.setCanvasSize(width, height);
-        for (let i = 0; i < height; i++) {
-            for (let j = 0; j < width; j++) {
-                let key = this.fieldMatrix[i][j];
-                let image = this.textures[key];
-                let destX = j * this.tileData.width;
-                let destY = i * this.tileData.height;
-                this.context.drawImage(image, destX, destY, this.tileData.width, this.tileData.height);
+        for (let i = 0; i < this.field.height; i++) {
+            for (let j = 0; j < this.field.width; j++) {
+                const key = this.fieldMatrix[i][j];
+                const image = this.textures[key];
+                const destX = j * this.tileData.width;
+                const destY = i * this.tileData.height;
+                this.context.drawImage(
+                    image,
+                    destX,
+                    destY,
+                    this.tileData.width,
+                    this.tileData.height);
             }
         }
     }
 
-    preLoadData() {
-        for (let prop in this.texturesData) {
-            if (this.texturesData.hasOwnProperty(prop)) {
-                let image = new Image();
-                image.src = this.texturesData[prop];
-                this.textures[prop] = image;
-            }
+    drawObjects() {
+        let drawData = this.getObjectsData();
+        drawData.forEach((gameObject) => {
+            const image = this.textures[gameObject.key];
+            this.context.drawImage(
+                image,
+                gameObject.sX,
+                gameObject.sY,
+                gameObject.sWidth,
+                gameObject.sHeight,
+                gameObject.x,
+                gameObject.y,
+                gameObject.width,
+                gameObject.height);
+        })
+    }
+
+    renderFrame() {
+        this.context.clearRect(0, 0, this.field.width, this.field.height);
+        this.drawField();
+        this.drawObjects();
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                this.renderFrame()
+            });
+        }, 0)
+    }
+
+    handleLoad() {
+        this.counter++;
+        if (this.counter === this.length) {
+            this.callback();
         }
+    }
+
+    static createCanvas() {
+        this.field.height = this.fieldMatrix.length;
+        this.field.width = this.fieldMatrix[0].length;
+        this.setCanvasSize(this.field.width, this.field.height);
+        requestAnimationFrame(() => {
+            this.renderFrame()
+        });
+    }
+
+    preLoadData(callback) {
+        const self = {
+            counter: 0,
+            length: 0,
+            callback: callback.bind(this)
+        };
+        _.forOwn(this.texturesData, (value, key) => {
+            self.length++;
+            let image = new Image();
+            image.onload = this.handleLoad.bind(self);
+            image.src = this.texturesData[key];
+            this.textures[key] = image;
+        });
     }
 }
 
-let textures = {
-    '_': '/Users/phd_13/Documents/game/img/terrain/earth.png',
-    '*': '/Users/phd_13/Documents/game/img/terrain/bushes1.png',
-    '#': '/Users/phd_13/Documents/game/img/terrain/bushes0.png',
-};
+/**
+ * Controls game events
+ */
+class EventsController {
+    constructor(setDirection) {
+        this.setDirection = setDirection;
+        this.keys = {
+            arrowUp: 38,
+            arrowDown: 40,
+            arrowLeft: 37,
+            arrowRight: 39,
+            spaceBar: 32,
+            w: 87,
+            s: 83,
+            a: 65,
+            d: 68,
+            rightShift: 16
+        };
 
-let matrix =
-    [
-        ['_', '_', '_', '_', '*', '_', '_', '_', '_', '*', '_', '_', '_', '_', '*'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'],
-        ['_', '_', '_', '_', '*', '_', '_', '_', '_', '*', '_', '_', '_', '_', '*'],
-        ['_', '_', '_', '_', '*', '_', '_', '_', '_', '*', '_', '_', '_', '_', '*'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'],
-        ['_', '_', '_', '_', '*', '_', '_', '_', '_', '*', '_', '_', '_', '_', '*'],
-        ['_', '_', '_', '_', '*', '_', '_', '_', '_', '*', '_', '_', '_', '_', '*'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'],
-        ['_', '_', '_', '_', '*', '_', '_', '_', '_', '*', '_', '_', '_', '_', '*'],
-        ['_', '_', '_', '_', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#']
-    ];
-
-new Canvas(matrix, textures, {width: 32, height: 32});
-
-class GameObject {
-    constructor(obj = {image: '', width: 100, height: 100, x: 25, y: 25}) {
-        this._image = obj.image;
-        this._width = obj.width;
-        this._height = obj.height;
-        this._x = obj.x;
-        this._y = obj.y;
+        document.addEventListener('keydown', (event) => {
+            const key = event.keyCode;
+            let direction = this.handleDirection(key);
+            this.setDirection(direction);
+        })
     }
 
-    get image() {
-        return this._image;
+    handleDirection(keyCode) {
+        let action = '';
+        switch (keyCode) {
+            case this.keys.arrowUp:
+            case this.keys.w:
+                action = 'up';
+                break;
+
+            case this.keys.arrowDown:
+            case this.keys.s:
+                action = 'down';
+                break;
+
+            case this.keys.arrowLeft:
+            case this.keys.a:
+                action = 'left';
+                break;
+
+            case this.keys.arrowRight:
+            case this.keys.d:
+                action = 'right';
+                break;
+
+            case this.keys.spaceBar:
+            case this.keys.shiftKey:
+                action = 'shoot';
+                break
+        }
+        return action
+    }
+}
+
+/**
+ * Class for every object in the game
+ */
+class GameObject {
+    constructor({key = '', width = 100, height = 100, x = 25, y = 25, sX, sY, sWidth, sHeight}) {
+        this._key = key;
+        this._width = width;
+        this._height = height;
+        this._x = x;
+        this._y = y;
+        this._sX = sX;
+        this._sY = sY;
+        this._sWidth = sWidth;
+        this._sHeight = sHeight;
+    }
+
+    get key() {
+        return this._key;
     }
 
     get width() {
@@ -115,22 +287,62 @@ class GameObject {
         this._y = newY;
     }
 
-    destroySelf() {
+    get sX() {
+        return this._sX;
+    }
+
+    get sY() {
+        return this._sY;
+    }
+
+    get sWidth() {
+        return this._sWidth;
+    }
+
+    get sHeight() {
+        return this._sHeight;
+    }
+
+    destroy() {
         //removes class instance from {...}
     }
 
 }
 
 class MovableObject extends GameObject {
-    constructor(gmObjectParams) {
+    constructor(gmObjectParams, speed = 10) {
         super(gmObjectParams);
 
+        this._speed = speed
     }
 
-    moveItself() {
-        //instance moves somewhere
+    move(direction) {
+        switch (direction) {
+            case 'up':
+                this.y -= this.speed;
+                break;
+
+            case 'down':
+                this.y += this.speed;
+                break;
+
+            case 'left':
+                this.x -= this.speed;
+                break;
+
+            case 'right':
+                this.x += this.speed;
+                break;
+        }
     }
 
+    get speed() {
+        return this._speed;
+    }
+
+    set speed(newSpeed) {
+        this._speed = newSpeed;
+    }
 }
 
 class Weapon extends MovableObject {
@@ -158,14 +370,13 @@ class Character extends MovableObject {
      * @param damage
      * @param lives
      * @param health
+     * @param speed
      */
-    constructor(gmObjectParams, damage = 10, lives, health = 100, direction) {
-        super(gmObjectParams, damage);
-
+    constructor(gmObjectParams, speed, damage = 10, lives, health) {
+        super(gmObjectParams, speed, damage);
         this._lives = lives;
         this._health = health;
         this._weapon = null;
-        this._direction = direction;
     }
 
     get lives() {
@@ -184,16 +395,8 @@ class Character extends MovableObject {
         this._health = newHealth
     }
 
-    set weapon(weaponObject) {
-        this._weapon = weaponObject
-    }
-
-    get direction() {
-        return this._direction;
-    }
-
-    set direction(newDirection) {
-        this._direction = newDirection;
+    get weapon() {
+        return this._weapon;
     }
 
     receiveDamage() {
@@ -209,9 +412,8 @@ class Character extends MovableObject {
 }
 
 class Player extends Character {
-    constructor(gmObjectParams, health, lives = 3) {
-        super(gmObjectParams, health, lives);
-
+    constructor(gmObjectParams, speed, lives = 3, health = 100) {
+        super(gmObjectParams, speed, lives, health);
     }
 
     updateStats() {
@@ -232,7 +434,7 @@ class StaticObject extends GameObject {
     }
 
     //подумать о том нужен ли тип вместо этих двух абстракций?
-    setSelfPosition() {
+    setPosition() {
         //triggers when there are no default position coordinates
     }
 }
@@ -248,3 +450,5 @@ class Barrier extends StaticObject {
         super(gmObjectParams)
     }
 }
+
+new GameController();
