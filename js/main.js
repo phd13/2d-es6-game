@@ -9,6 +9,7 @@ const textures = {
     '$': 'img/actors/DoomKnight.png',
     '^': 'img/bonuses/apple.png'
 };
+//собрать передаваемые параметры при создании инстансов класса GameObject в отдельный конфиг
 /**
  * Game field matrix, size and textures
  * @type {[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}
@@ -38,7 +39,6 @@ class GameController {
         this.player = new Player({sWidth: 32, sHeight: 32, sX: 0, sY: 0, width: 32, height: 32, x: 150, y: 150, key: '$'});
         this.canvas = new Canvas(matrix, textures, {width: 32, height: 32}, this.prepareObjectsData.bind(this));
         this.bonus = new Bonus({sWidth: 22, sHeight: 22, sX: 0, sY: 0, width: 22, height: 22, x: 200, y: 200, key: '^'});
-        console.log(this.player);
     }
 
     /**
@@ -46,7 +46,46 @@ class GameController {
      * @param direction
      */
     setDirection(direction) {
+        this.handleCollisions(direction);
         this.player.move(direction);
+        console.log(!this.handleCollisions(direction));
+    }
+
+    handleCollisions(direction) {
+        switch (direction) {
+            case 'up':
+                return (this.player.interval.yTopLeft < this.bonus.interval.yBotLeft
+                    || this.player.interval.yBotLeft < this.bonus.interval.yBotLeft)
+                    && (this.player.interval.xTopLeft < this.bonus.interval.xBotLeft
+                        || this.player.interval.xBotLeft < this.bonus.interval.xBotLeft);
+                // снизу вверх player Y topleft < bonus Y botLeft && player Y botleft < bonus Y botleft
+                break;
+
+            case 'down':
+                return (this.player.interval.yBotLeft < this.bonus.interval.yTopLeft
+                    || this.player.interval.yTopLeft < this.bonus.interval.yBotLeft)
+                    && (this.player.interval.xBotLeft < this.bonus.interval.xTopLeft
+                        || this.player.interval.xTopLeft < this.bonus.interval.xBotLeft);
+                // сверху вниз player Y botleft < bonus Y topleft %% player Y topleft < bonus Y botleft
+                break;
+
+            case 'left':
+                return (this.player.interval.xTopLeft > this.bonus.interval.xTopRight
+                    || this.player.interval.xTopRight > this.bonus.interval.xTopRight)
+                    && (this.player.interval.yTopLeft > this.bonus.interval.yTopRight
+                        || this.player.interval.yTopRight > this.bonus.interval.yTopRight);
+                // справа налево player X topleft > bonus X topright && player X topright > bonus X topright
+                break;
+
+            case 'right':
+                return (this.player.interval.xTopRight < this.bonus.interval.xTopLeft
+                    || this.player.interval.xTopLeft < this.bonus.interval.xTopLeft)
+                    && (this.player.interval.yTopRight < this.bonus.interval.yTopLeft
+                        || this.player.interval.yTopLeft < this.bonus.interval.yTopLeft);
+                // слева направо player X topright < bonus X topleft && player X topleft < bonus X topleft
+                break;
+        }
+
     }
 
     prepareObjectsData() {
@@ -301,6 +340,20 @@ class GameObject {
 
     get sHeight() {
         return this._sHeight;
+    }
+
+    get interval() {
+        let interval = {
+            xTopLeft: this.x,
+            yTopLeft: this.y,
+            xTopRight: this.x + this.width,
+            yTopRight: this.y,
+            xBotLeft: this.x,
+            yBotLeft: this.y + this.height,
+            xBotRight: this.x + this.width,
+            yBotRight: this.y + this.height
+        };
+        return interval;
     }
 
     destroy() {
