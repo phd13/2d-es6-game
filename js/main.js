@@ -33,12 +33,48 @@ const matrix =
         ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_']
     ];
 
+class StaticObjectsCreator {
+    constructor(fieldWidth, fieldHeight) {
+        this.objArray = [];
+        this.fieldWidth = fieldWidth;
+        this.fieldHeight = fieldHeight;
+        this.createStaticObject(10);
+    }
+
+    createStaticObject(quantity) {
+        for (let i = 0; i <= quantity; i++) {
+            let staticObj = new Bonus({
+                sWidth: 22,
+                sHeight: 22,
+                sX: 0,
+                sY: 0,
+                width: 22,
+                height: 22,
+                x: Math.floor(Math.random() * (this.fieldWidth + 1)),
+                y: Math.floor(Math.random() * (this.fieldHeight + 1)),
+                key: '^'
+            });
+            this.objArray.push(staticObj);
+        }
+    }
+}
+
 class GameController {
     constructor() {
         this.eventsController = new EventsController(this.setDirection.bind(this));
-        this.player = new Player({sWidth: 32, sHeight: 32, sX: 0, sY: 0, width: 32, height: 32, x: 150, y: 150, key: '$'});
+        this.player = new Player({
+            sWidth: 32,
+            sHeight: 32,
+            sX: 0,
+            sY: 0,
+            width: 32,
+            height: 32,
+            x: 150,
+            y: 150,
+            key: '$'
+        });
         this.canvas = new Canvas(matrix, textures, {width: 32, height: 32}, this.prepareObjectsData.bind(this));
-        this.bonus = new Bonus({sWidth: 22, sHeight: 22, sX: 0, sY: 0, width: 22, height: 22, x: 200, y: 200, key: '^'});
+        this.staticObjectsCreator = new StaticObjectsCreator(470, 470);
     }
 
     /**
@@ -46,46 +82,25 @@ class GameController {
      * @param direction
      */
     setDirection(direction) {
-        this.handleCollisions(direction);
+        let resArr = this.staticObjectsCreator.objArray.filter((elem) => !this.handleCollisions(this.player, elem));
+        this.staticObjectsCreator.objArray = resArr;
         this.player.move(direction);
-        console.log(!this.handleCollisions(direction));
     }
 
-    handleCollisions(direction) {
-        switch (direction) {
-            case 'up':
-                return (this.player.interval.yTopLeft < this.bonus.interval.yBotLeft
-                    || this.player.interval.yBotLeft < this.bonus.interval.yBotLeft)
-                    && (this.player.interval.xTopLeft < this.bonus.interval.xBotLeft
-                        || this.player.interval.xBotLeft < this.bonus.interval.xBotLeft);
-                // снизу вверх player Y topleft < bonus Y botLeft && player Y botleft < bonus Y botleft
-                break;
-
-            case 'down':
-                return (this.player.interval.yBotLeft < this.bonus.interval.yTopLeft
-                    || this.player.interval.yTopLeft < this.bonus.interval.yBotLeft)
-                    && (this.player.interval.xBotLeft < this.bonus.interval.xTopLeft
-                        || this.player.interval.xTopLeft < this.bonus.interval.xBotLeft);
-                // сверху вниз player Y botleft < bonus Y topleft %% player Y topleft < bonus Y botleft
-                break;
-
-            case 'left':
-                return (this.player.interval.xTopLeft > this.bonus.interval.xTopRight
-                    || this.player.interval.xTopRight > this.bonus.interval.xTopRight)
-                    && (this.player.interval.yTopLeft > this.bonus.interval.yTopRight
-                        || this.player.interval.yTopRight > this.bonus.interval.yTopRight);
-                // справа налево player X topleft > bonus X topright && player X topright > bonus X topright
-                break;
-
-            case 'right':
-                return (this.player.interval.xTopRight < this.bonus.interval.xTopLeft
-                    || this.player.interval.xTopLeft < this.bonus.interval.xTopLeft)
-                    && (this.player.interval.yTopRight < this.bonus.interval.yTopLeft
-                        || this.player.interval.yTopLeft < this.bonus.interval.yTopLeft);
-                // слева направо player X topright < bonus X topleft && player X topleft < bonus X topleft
-                break;
+    handleCollisions(obj1, obj2) {
+        if (!obj2) {
+            return false;
         }
+        let XColl = false;
+        let YColl = false;
 
+        if ((obj1.x + obj1.width >= obj2.x) && (obj1.x <= obj2.x + obj2.width)) XColl = true;
+        if ((obj1.y + obj1.height >= obj2.y) && (obj1.y <= obj2.y + obj2.height)) YColl = true;
+
+        if (XColl && YColl) {
+            return true;
+        }
+        return false;
     }
 
     prepareObjectsData() {
@@ -102,19 +117,21 @@ class GameController {
             key: this.player.key,
             speed: this.player.speed
         };
-        const bonusData = {
-            sX: this.bonus.sX,
-            sY: this.bonus.sY,
-            sWidth: this.bonus.sWidth,
-            sHeight: this.bonus.sHeight,
-            x: this.bonus.x,
-            y: this.bonus.y,
-            width: this.bonus.width,
-            height: this.bonus.height,
-            key: this.bonus.key
-        };
-
-        objData.push(playerData, bonusData);
+        objData.push(playerData);
+        this.staticObjectsCreator.objArray.forEach((elem) => {
+            let parsedObj = {
+                sX: elem.sX,
+                sY: elem.sY,
+                sWidth: elem.sWidth,
+                sHeight: elem.sHeight,
+                x: elem.x,
+                y: elem.y,
+                width: elem.width,
+                height: elem.height,
+                key: elem.key
+            };
+            objData.push(parsedObj);
+        });
         return objData;
     }
 }
