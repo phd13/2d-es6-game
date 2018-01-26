@@ -1,5 +1,5 @@
 {
-    "name": "opa-game",
+    "name": "phd-game",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -8,14 +8,11 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/opaoz/opa_game.git"
+        "url": "git+https://github.com/phd13/2d-es6-game.git"
     },
-    "author": "",
+    "author": "phd_13",
     "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/opaoz/opa_game/issues"
-    },
-    "homepage": "https://github.com/opaoz/opa_game#readme",
+    "homepage": "https://github.com/phd13/2d-es6-game#readme",
     "devDependencies": {
         "babel-eslint": "^8.0.1",
         "babel-preset-env": "^1.6.0",
